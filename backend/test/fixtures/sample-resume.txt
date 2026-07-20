@@ -1,0 +1,13 @@
+Alex Morgan
+Backend Software Engineer
+
+Experience
+- Five years building TypeScript and Node.js services.
+- Designed PostgreSQL schemas and REST APIs for SaaS products.
+- Operated containerized services with CI/CD and production monitoring.
+
+Skills
+TypeScript, Node.js, NestJS, PostgreSQL, Docker, AWS, automated testing.
+
+Education
+BSc Computer Science.
