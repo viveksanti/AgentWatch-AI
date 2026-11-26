@@ -1,6 +1,7 @@
 export type Agent = {
   id: string; name: string; type: string; description: string; systemPrompt: string;
   provider: string; model: string; temperature: number; status: "ACTIVE" | "PAUSED";
+  demo?: boolean;
   createdAt: string; updatedAt: string; executions?: Execution[];
 };
 
@@ -17,4 +18,5 @@ export type Overview = {
   avgLatency: number; totalTokens: number; totalCost: number;
   statuses: Record<string, number>; latestExecutions: Execution[];
   timeline: { time: string; latency: number; tokens: number; success: number }[];
+  agentBreakdown: { agentId: string; name: string; runs: number; tokens: number }[];
 };

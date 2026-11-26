@@ -5,6 +5,10 @@ import { AppShell } from "@/components/app-shell";
 export const metadata: Metadata = {
   title: "AgentWatch — AI Operations",
   description: "Monitor, manage, and run your AI agent workforce.",
+  icons: {
+    icon: "/icon.svg",
+    apple: "/apple-icon.svg",
+  },
 };
 
 export default function RootLayout({

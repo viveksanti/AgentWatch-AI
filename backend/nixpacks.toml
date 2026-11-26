@@ -1,0 +1,13 @@
+providers = ["node"]
+
+[phases.setup]
+nixPkgs = ["postgresql_16"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npx prisma generate", "npm run build", "npx tsc prisma/seed.ts --outDir dist/seed --esModuleInterop --resolveJsonModule --module commonjs --target es2020 --skipLibCheck || true"]
+
+[start]
+cmd = "npx prisma migrate deploy && node dist/seed/seed.js && node dist/src/main"

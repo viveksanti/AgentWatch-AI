@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: agentwatch
+      POSTGRES_USER: agentwatch
+      POSTGRES_PASSWORD: agentwatch
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agentwatch"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://agentwatch:agentwatch@db:5432/agentwatch?schema=public"
+      AI_SIMULATION: "true"
+      FRONTEND_URL: "http://localhost:3000"
+      PORT: "3001"
+      # Uncomment and fill in to enable live AI:
+      # OPENAI_API_KEY: ""
+      # GEMINI_API_KEY: ""
+      # AI_SIMULATION: "false"
+    ports:
+      - "3001:3001"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: "http://localhost:3001/api"
+    ports:
+      - "3000:3000"
+
+volumes:
+  db_data:

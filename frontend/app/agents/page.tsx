@@ -93,7 +93,10 @@ export default function AgentsPage() {
                 <div className="agent-avatar">
                   {agent.name.slice(0, 2).toUpperCase()}
                 </div>
-                <Status value={agent.status} />
+                <div style={{display:"flex",gap:6,alignItems:"center"}}>
+                  {agent.demo && <span className="demo-badge">Demo</span>}
+                  <Status value={agent.status} />
+                </div>
               </div>
               <h2>{agent.name}</h2>
               <span className="agent-type">{agent.type}</span>
@@ -119,16 +122,20 @@ export default function AgentsPage() {
                 >
                   Configure
                 </button>
-                <button className="button ghost" onClick={() => toggle(agent)}>
-                  {agent.status === "ACTIVE" ? "Pause" : "Resume"}
-                </button>
-                <button
-                  className="icon-button danger"
-                  aria-label="Delete agent"
-                  onClick={() => remove(agent)}
-                >
-                  <Icon name="trash" />
-                </button>
+                {!agent.demo && (
+                  <button className="button ghost" onClick={() => toggle(agent)}>
+                    {agent.status === "ACTIVE" ? "Pause" : "Resume"}
+                  </button>
+                )}
+                {!agent.demo && (
+                  <button
+                    className="icon-button danger"
+                    aria-label="Delete agent"
+                    onClick={() => remove(agent)}
+                  >
+                    <Icon name="trash" />
+                  </button>
+                )}
               </div>
             </article>
           ))}

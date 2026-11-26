@@ -1,18 +1,41 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import axios from 'axios';
 import OpenAI from 'openai';
 
 type AgentConfig = { name: string; type?: string; systemPrompt: string; model: string; temperature: number };
 
 @Injectable()
 export class AiService {
+  private readonly logger = new Logger(AiService.name);
+
   async run(agent: AgentConfig, task: string) {
     const started = Date.now();
-    if (!process.env.OPENAI_API_KEY || process.env.AI_SIMULATION === 'true') {
+    const openAiKey = process.env.OPENAI_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY;
+
+    if (process.env.AI_SIMULATION === 'true' || (!openAiKey && !geminiKey)) {
       const output = this.simulate(agent, task);
       return { output, latency: Date.now() - started, tokens: Math.ceil((task.length + output.length) / 4), cost: 0 };
     }
 
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY, baseURL: process.env.OPENAI_BASE_URL });
+    if (openAiKey) {
+      try {
+        return await this.runOpenAi(agent, task, started, openAiKey);
+      } catch (error) {
+        if (!geminiKey) throw error;
+        this.logger.warn('OpenAI request failed; retrying with Gemini');
+      }
+    }
+
+    return this.runGemini(agent, task, started, geminiKey!);
+  }
+
+  private async runOpenAi(agent: AgentConfig, task: string, started: number, apiKey: string) {
+    const client = new OpenAI({
+      apiKey,
+      baseURL: process.env.OPENAI_BASE_URL || undefined,
+      timeout: this.providerTimeout(),
+    });
     const result = await client.chat.completions.create({
       model: agent.model,
       temperature: agent.temperature,
@@ -20,6 +43,31 @@ export class AiService {
     });
     const tokens = result.usage?.total_tokens ?? 0;
     return { output: result.choices[0]?.message.content ?? '', latency: Date.now() - started, tokens, cost: 0 };
+  }
+
+  private async runGemini(agent: AgentConfig, task: string, started: number, apiKey: string) {
+    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+    const response = await axios.post(
+      url,
+      {
+        systemInstruction: { parts: [{ text: agent.systemPrompt }] },
+        contents: [{ role: 'user', parts: [{ text: task }] }],
+        generationConfig: { temperature: agent.temperature },
+      },
+      { headers: { 'x-goog-api-key': apiKey }, timeout: this.providerTimeout() },
+    );
+    const output = (response.data?.candidates?.[0]?.content?.parts ?? [])
+      .map((part: { text?: string }) => part.text ?? '')
+      .join('');
+    if (!output) throw new Error('Gemini returned no text response');
+    const tokens = response.data?.usageMetadata?.totalTokenCount ?? 0;
+    return { output, latency: Date.now() - started, tokens, cost: 0 };
+  }
+
+  private providerTimeout() {
+    const configured = Number(process.env.AI_PROVIDER_TIMEOUT_MS);
+    return Number.isFinite(configured) && configured > 0 ? configured : 30_000;
   }
 
   private simulate(agent: AgentConfig, task: string) {
