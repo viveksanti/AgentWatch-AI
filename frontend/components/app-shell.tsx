@@ -14,13 +14,16 @@ const nav = [
 function useApiStatus() {
   const [ok, setOk] = useState<boolean | null>(null);
   useEffect(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
     const check = () =>
-      fetch((process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api") + "/agents")
+      fetch(`${base}/agents`)
         .then(() => setOk(true))
         .catch(() => setOk(false));
     check();
-    const t = setInterval(check, 20_000);
-    return () => clearInterval(t);
+    const statusTimer = setInterval(check, 20_000);
+    // Keep-alive ping every 14 min — prevents Render free tier spin-down
+    const pingTimer = setInterval(() => fetch(`${base}/ping`).catch(() => {}), 14 * 60_000);
+    return () => { clearInterval(statusTimer); clearInterval(pingTimer); };
   }, []);
   return ok;
 }

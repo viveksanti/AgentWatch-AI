@@ -2,7 +2,9 @@
 
 **A production-grade AI operations platform** — create agents, run them on real tasks, and monitor every execution with built-in observability.
 
-🔗 **[Live demo](https://your-demo-url.vercel.app)** &nbsp;|&nbsp; Built with Next.js, NestJS, PostgreSQL, OpenAI
+🔗 **[Live demo](https://your-demo-url.vercel.app)** &nbsp;·&nbsp; **[View on GitHub](https://github.com/YOUR_USERNAME/agentwatch-ai)**
+
+> Built with Next.js · NestJS · PostgreSQL · OpenAI · Docker · Deployed free on Vercel + Render + Neon
 
 ---
 
@@ -26,12 +28,12 @@ Visitors can also **build their own agent** from a template (email drafter, meet
 ```
 ┌──────────────────┐     HTTPS      ┌──────────────────┐     SQL      ┌──────────────┐
 │  Next.js 16      │ ────────────▶  │  NestJS 11       │ ──────────▶  │  PostgreSQL  │
-│  React 19        │                │  REST API        │              │  Prisma ORM  │
-│  TypeScript      │                │  Prisma Client   │              └──────────────┘
-│  Tailwind CSS    │                │  Throttler       │
-│  Vercel          │                │  Scheduler       │     AI       ┌──────────────┐
-└──────────────────┘                │  Railway         │ ──────────▶  │  OpenAI API  │
-                                    └──────────────────┘              │  Gemini API  │
+│  React 19        │                │  REST API        │              │  Neon (free) │
+│  TypeScript      │                │  Throttler       │              └──────────────┘
+│  Tailwind CSS    │                │  Scheduler       │
+│  Vercel (free)   │                │  Render (free)   │     AI       ┌──────────────┐
+└──────────────────┘                └──────────────────┘ ──────────▶  │  OpenAI API  │
+                                                                       │  Gemini API  │
                                                                        └──────────────┘
 ```
 
@@ -43,9 +45,10 @@ Visitors can also **build their own agent** from a template (email drafter, meet
 |---|---|
 | **Dual AI provider** | OpenAI first, automatic Gemini fallback. Configurable timeout and model via env vars |
 | **Simulation mode** | Full functionality with no API keys — realistic simulated responses, all executions recorded |
-| **Demo protection** | Seeded agents marked `demo=true` in DB; server blocks delete/pause on them |
-| **Rate limiting** | NestJS Throttler — 20 req/min per IP, applied globally except read-only observer endpoints |
+| **Demo protection** | Seeded agents marked `demo=true` in DB; server blocks delete/pause on them server-side |
+| **Rate limiting** | NestJS Throttler — 20 req/min per IP, applied globally; read-only endpoints exempt |
 | **Auto-prune** | `@Cron` job deletes executions older than 7 days nightly — no manual maintenance |
+| **Keep-alive ping** | Frontend pings `/api/ping` every 14 min — prevents Render free tier spin-down |
 | **Document AI** | PDF, DOCX, TXT extraction via `pdf-parse` + `mammoth`; prompt-injected securely |
 | **Observability** | Per-execution latency, tokens, cost; per-agent breakdown chart; 15s live refresh |
 | **One-command local** | `docker compose up --build` — Postgres + backend + frontend, DB seeded automatically |
@@ -60,7 +63,8 @@ Visitors can also **build their own agent** from a template (email drafter, meet
 | Backend | NestJS 11, TypeScript, `@nestjs/throttler`, `@nestjs/schedule` |
 | Database | PostgreSQL 16, Prisma ORM |
 | AI | OpenAI SDK, Gemini REST API |
-| Infra | Docker Compose (local), Railway (backend), Vercel (frontend), Neon (DB) |
+| Infra (local) | Docker Compose |
+| Infra (production) | Vercel (frontend) · Render (backend) · Neon (database) — all free |
 
 ---
 
@@ -69,29 +73,29 @@ Visitors can also **build their own agent** from a template (email drafter, meet
 ```
 agentwatch-ai/
 ├── docker-compose.yml        # one-command local stack
+├── render.yaml               # Render Infrastructure-as-Code (backend + DB)
 ├── frontend/                 # Next.js dashboard
-│   ├── app/                  # pages (overview, agents, executions, observability, about)
-│   ├── components/           # app shell, icons, shared UI
+│   ├── app/                  # pages: overview, agents, executions, observability, about
+│   ├── components/           # app shell (keep-alive ping), icons, shared UI
 │   ├── lib/                  # API client, TypeScript types
 │   └── vercel.json           # Vercel deploy config
 └── backend/                  # NestJS API
     ├── src/
-    │   ├── agents/           # CRUD + demo protection + agent cap
-    │   ├── executions/       # run, run-document, test, prune scheduler
+    │   ├── agents/           # CRUD + demo protection + 50-agent cap
+    │   ├── executions/       # run, run-document, test, nightly prune scheduler
     │   ├── observer/         # overview + per-agent breakdown endpoint
     │   ├── ai/               # OpenAI + Gemini with fallback + simulation
-    │   └── prisma/           # DB service
+    │   └── app.controller.ts # health check + /api/ping keep-alive
     ├── prisma/
-    │   ├── schema.prisma     # Agent (with demo flag) + Execution models
+    │   ├── schema.prisma     # Agent (demo flag) + Execution models
     │   ├── migrations/       # versioned SQL migrations
     │   └── seed.ts           # 5 demo agents seeded with demo=true
-    ├── railway.json          # Railway deploy config
-    └── nixpacks.toml         # Nixpacks build config
+    └── railway.json          # Railway deploy config (alternative)
 ```
 
 ---
 
-## Run locally (Docker — recommended)
+## 🚀 Run locally (Docker — recommended)
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/agentwatch-ai.git
@@ -115,37 +119,64 @@ Then `docker compose up --build`.
 
 ---
 
-## Deploy to production
+## ☁️ Deploy to production — free forever
 
-### Backend → Railway
+**Stack: Vercel (frontend) + Render (backend) + Neon (database)**
 
-1. Create a new Railway project → **Deploy from GitHub repo** → select the repo
-2. Set **Root Directory** to `backend`
-3. Railway auto-detects `nixpacks.toml` for the build
-4. Add a **PostgreSQL** plugin — Railway injects `DATABASE_URL` automatically
-5. Set environment variables:
+No credit card required. No expiry.
 
-   | Variable | Value |
-   |---|---|
-   | `AI_SIMULATION` | `true` (or `false` + API keys for live mode) |
-   | `FRONTEND_URL` | Your Vercel frontend URL |
-   | `PORT` | `3001` |
+### Step 1 — Database on Neon (2 min)
 
-### Frontend → Vercel
+1. Sign up at [neon.tech](https://neon.tech) — free, no card
+2. Create a new project → copy the **Connection string** (starts with `postgresql://...`)
+3. Keep this tab open — you'll need the string in Step 2
 
-1. Import the repo in Vercel → set **Root Directory** to `frontend`
-2. Add environment variable:
+### Step 2 — Backend on Render (5 min)
+
+1. Sign up at [render.com](https://render.com) — free, no card
+2. New → **Blueprint** → connect your GitHub repo
+3. Render reads `render.yaml` automatically and creates the web service
+4. In the Render dashboard, set these environment variables on the `agentwatch-backend` service:
 
    | Variable | Value |
    |---|---|
-   | `NEXT_PUBLIC_API_URL` | Your Railway backend URL + `/api` |
+   | `DATABASE_URL` | Paste the Neon connection string from Step 1 |
+   | `AI_SIMULATION` | `true` *(or `false` + API keys for live AI)* |
+   | `FRONTEND_URL` | Leave blank for now — fill in after Step 3 |
 
-3. Deploy. Vercel handles everything else.
+5. Click **Deploy** — Render runs migrations, seeds demo agents, and starts the API
+6. Copy your Render service URL (e.g. `https://agentwatch-backend.onrender.com`)
 
-### Database → Neon (alternative to Railway Postgres)
+> **Cold start note:** Render's free tier spins down after 15 minutes of inactivity. The app automatically pings `/api/ping` every 14 minutes to prevent this while anyone has the tab open.
 
-1. Create a free database at [neon.tech](https://neon.tech)
-2. Copy the connection string into Railway's `DATABASE_URL` env var
+### Step 3 — Frontend on Vercel (3 min)
+
+1. Sign up at [vercel.com](https://vercel.com) — free, no card
+2. New Project → Import your GitHub repo
+3. Set **Root Directory** to `frontend`
+4. Add environment variable:
+
+   | Variable | Value |
+   |---|---|
+   | `NEXT_PUBLIC_API_URL` | Your Render URL + `/api` e.g. `https://agentwatch-backend.onrender.com/api` |
+
+5. Deploy — Vercel builds and publishes to a `*.vercel.app` URL
+
+### Step 4 — Wire CORS (1 min)
+
+Go back to Render → `agentwatch-backend` → Environment → set:
+
+| Variable | Value |
+|---|---|
+| `FRONTEND_URL` | Your Vercel URL e.g. `https://agentwatch.vercel.app` |
+
+Redeploy the backend. Done — your app is live.
+
+---
+
+### Live AI mode (optional)
+
+Set `OPENAI_API_KEY` and/or `GEMINI_API_KEY` as environment variables on the Render service and change `AI_SIMULATION` to `false`. OpenAI is tried first; Gemini is used as automatic fallback.
 
 ---
 
