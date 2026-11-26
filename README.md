@@ -2,7 +2,7 @@
 
 **A production-grade AI operations platform** — create agents, run them on real tasks, and monitor every execution with built-in observability.
 
-🔗 **[Live demo](https://your-demo-url.vercel.app)** &nbsp;·&nbsp; **[View on GitHub](https://github.com/YOUR_USERNAME/agentwatch-ai)**
+🔗 **[Live demo](https://agentwatch-ai.vercel.app)** &nbsp;·&nbsp; **[View on GitHub](https://github.com/viveksanti/AgentWatch-AI)**
 
 > Built with Next.js · NestJS · PostgreSQL · OpenAI · Docker · Deployed free on Vercel + Render + Neon
 
@@ -98,7 +98,7 @@ agentwatch-ai/
 ## 🚀 Run locally (Docker — recommended)
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/agentwatch-ai.git
+git clone https://github.com/viveksanti/AgentWatch-AI
 cd agentwatch-ai
 docker compose up --build
 ```
@@ -168,7 +168,7 @@ Go back to Render → `agentwatch-backend` → Environment → set:
 
 | Variable | Value |
 |---|---|
-| `FRONTEND_URL` | Your Vercel URL e.g. `https://agentwatch.vercel.app` |
+| `FRONTEND_URL` | Your Vercel URL e.g. `https://agentwatch-ai.vercel.app` |
 
 Redeploy the backend. Done — your app is live.
 
