@@ -16,7 +16,7 @@ export class ObserverController {
       this.prisma.execution.groupBy({ by: ['status'], _count: true }),
       this.prisma.execution.findMany({ take: 100, orderBy: { createdAt: 'desc' }, select: { latency: true, tokens: true, cost: true, status: true, createdAt: true } }),
       this.prisma.execution.findMany({ take: 6, orderBy: { createdAt: 'desc' }, include: { agent: { select: { name: true, type: true } } } }),
-      this.prisma.execution.groupBy({ by: ['agentId'], _count: { id: true }, _sum: { tokens: true }, include: { agent: { select: { name: true } } } } as any),
+      this.prisma.execution.groupBy({ by: ['agentId'], _count: { id: true }, _sum: { tokens: true } }),
     ]);
     const successes = grouped.find((x) => x.status === 'SUCCESS')?._count ?? 0;
 
